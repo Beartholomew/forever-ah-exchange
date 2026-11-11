@@ -6,6 +6,9 @@
 //
 // Secrets to add in Cloudflare (Settings → Variables and Secrets, type "Secret"):
 //   BLIZZARD_CLIENT_ID, BLIZZARD_CLIENT_SECRET
+//   GH_DISPATCH_TOKEN  (optional) a GitHub token that may run this repo's Actions.
+//                      With a Cron Trigger on this Worker, it starts the price
+//                      collector on time even when GitHub's own schedule is late.
 
 const ALLOWED_ORIGINS = [
   "https://beartholomew.github.io",
@@ -13,6 +16,7 @@ const ALLOWED_ORIGINS = [
   "http://127.0.0.1:5000",
 ];
 const REGION = "us";
+const GITHUB_WORKFLOW = "https://api.github.com/repos/Beartholomew/forever-ah-exchange/actions/workflows/collect.yml/dispatches";
 const NAMESPACE = `profile-forever-${REGION}`;
 const API = `https://${REGION}.api.blizzard.com`;
 
@@ -56,6 +60,22 @@ function cors(origin) {
 }
 
 export default {
+  // Runs on the Worker's Cron Trigger: start the GitHub collector.
+  async scheduled(event, env, ctx) {
+    if (!env.GH_DISPATCH_TOKEN) return;
+    const r = await fetch(GITHUB_WORKFLOW, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.GH_DISPATCH_TOKEN}`,
+        Accept: "application/vnd.github+json",
+        "User-Agent": "forever-ah-sync",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ref: "main" }),
+    });
+    if (!r.ok) console.log("GitHub dispatch failed", r.status, await r.text());
+  },
+
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
     const headers = cors(origin);
