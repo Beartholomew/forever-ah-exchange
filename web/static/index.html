@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forever AH Exchange</title>
+<link rel="icon" href="data:,">
+<script src="/static/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0907;--panel:#15110c;--panel2:#1f1911;--line:#3b2f1d;--edge:#7a6236;--text:#eadfc8;--mute:#a0937a;--gold:#ffd100;--goldsoft:#e8b94a;--up:#3ccf6e;--down:#f05d4f;--warn:#ff9d2e;--blue:#4aa3ff;--r:6px;
+ --q-poor:#9d9d9d;--q-common:#ffffff;--q-uncommon:#1eff00;--q-rare:#2b8cff;--q-epic:#b45cf5;--q-legendary:#ff8000}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font:14px/1.5 Inter,system-ui,"Segoe UI",sans-serif;
+ background:radial-gradient(1200px 600px at 50% -200px,#2a1f10 0%,transparent 70%),var(--bg)}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:12px 22px;border-bottom:1px solid var(--edge);position:sticky;top:0;z-index:5;
+ background:linear-gradient(#1c150c,#120e08);box-shadow:0 2px 0 #000}
+h1{font:700 21px Cinzel,serif;margin:0;color:var(--gold);letter-spacing:.5px;text-shadow:0 2px 0 #000}
+h1 span{color:var(--text)}
+h2{font:700 15px Cinzel,serif;margin:0 0 10px;color:var(--gold);letter-spacing:.3px;text-shadow:0 1px 0 #000}
+h3{font:600 12px Inter,sans-serif;margin:0 0 8px;color:var(--mute);text-transform:uppercase;letter-spacing:.6px}
+main{max-width:1320px;margin:0 auto;padding:18px 22px 60px;display:grid;gap:16px}
+.panel{background:linear-gradient(#1a140d,#130f0a);border:1px solid var(--edge);border-radius:var(--r);padding:16px;
+ box-shadow:inset 0 0 0 1px #000,inset 0 0 24px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.6)}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+select,input,button{background:#0e0b07;color:var(--text);border:1px solid var(--line);border-radius:4px;padding:7px 10px;font:inherit}
+input:focus,select:focus{outline:none;border-color:var(--goldsoft)}
+button{cursor:pointer;background:linear-gradient(#2a1f12,#1a130b);border-color:var(--edge)}
+button:hover{border-color:var(--gold);color:var(--gold)}
+button.primary{background:linear-gradient(#a3000a,#6a0006);border-color:#d6a73c;color:#ffd100;font:700 13px Cinzel,serif;letter-spacing:.4px}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:3px;background:#0e0b07;color:var(--mute);white-space:nowrap;border:1px solid var(--line)}
+.b-up{color:var(--up);border-color:#1f5a33}.b-down{color:var(--down);border-color:#6b2520}.b-warn{color:var(--warn);border-color:#6b4512}.b-gold{color:var(--gold);border-color:#6b5612}.b-blue{color:var(--blue);border-color:#1d4170}
+.row{display:flex;align-items:center;gap:10px;padding:7px 4px;border-top:1px solid var(--line);cursor:pointer}.row:first-of-type{border-top:0}
+.row:hover{background:rgba(255,209,0,.04)}
+.nm{flex:1;min-width:0}.nm .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;font-weight:600}
+.sub{font-size:12px;color:var(--mute)}
+.up{color:var(--up)}.down{color:var(--down)}.gold{color:var(--gold)}
+.banner{background:rgba(255,157,46,.08);border:1px solid #6b4512;color:var(--warn);border-radius:var(--r);padding:10px 14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0}
+.tile{background:#0e0b07;border:1px solid var(--line);border-radius:4px;padding:10px 12px}.tile .k{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.5px}.tile .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile.big{border-color:var(--edge)}.tile.big .v{font-size:20px}
+.chartbox{position:relative;height:260px}.chartbox.sm{height:170px}
+.craft{border-top:1px solid var(--line);padding:12px 0}.craft:first-of-type{border-top:0}
+.steps{margin:6px 0 0;padding-left:18px;color:var(--mute);font-size:13px}
+.search{position:relative}.search input{width:100%}
+.results{position:absolute;left:0;right:0;top:40px;background:#0e0b07;border:1px solid var(--edge);border-radius:4px;max-height:320px;overflow:auto;z-index:6}
+.results div{padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:8px}.results div:hover{background:rgba(255,209,0,.06)}
+.prof{display:grid;grid-template-columns:150px 1fr 60px 28px;gap:8px;align-items:center;margin:6px 0}
+.prof input[type=range]{padding:0;accent-color:var(--gold)}
+.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:4px 0 0 4px}.seg button:last-child{border-radius:0 4px 4px 0}.seg button.on{color:var(--gold);border-color:var(--gold)}
+.star{background:none;border:0;font-size:18px;color:var(--mute);padding:0 4px}.star.on{color:var(--gold)}
+.empty{color:var(--mute);font-size:13px;padding:8px 0}
+.err{color:var(--down);font-size:12px}
+.icon{width:30px;height:30px;border-radius:4px;flex:none;border:1px solid #000;box-shadow:0 0 0 1px var(--qc,#555);object-fit:cover;background:#222}
+.icon.lg{width:44px;height:44px}
+.icon.ph{display:flex;align-items:center;justify-content:center;font:700 13px Cinzel,serif;color:var(--qc,#999);background:linear-gradient(#2a2418,#14100a)}
+.q-Poor{--qc:var(--q-poor);color:var(--q-poor)}.q-Common{--qc:#b9b9b9;color:var(--q-common)}.q-Uncommon{--qc:var(--q-uncommon);color:var(--q-uncommon)}
+.q-Rare{--qc:var(--q-rare);color:var(--q-rare)}.q-Epic{--qc:var(--q-epic);color:var(--q-epic)}.q-Legendary{--qc:var(--q-legendary);color:var(--q-legendary)}
+.money{white-space:nowrap;font-variant-numeric:tabular-nums}
+.money i{display:inline-block;width:.72em;height:.72em;border-radius:50%;margin:0 .32em 0 .12em;vertical-align:-.02em;box-shadow:inset -1px -1px 0 rgba(0,0,0,.45),inset 1px 1px 0 rgba(255,255,255,.4)}
+.money i.g{background:#e8b100}.money i.s{background:#c4c8cc}.money i.c{background:#b8693a}
+.money.neg{color:var(--down)}
+#tip{position:fixed;pointer-events:none;z-index:50;min-width:220px;max-width:300px;background:rgba(8,8,22,.95);border:1px solid #8b8b9b;border-radius:5px;padding:8px 10px;
+ box-shadow:0 0 0 1px #000,0 4px 14px rgba(0,0,0,.7);font-size:13px;display:none}
+#tip .tn{font-weight:600;font-size:14px}#tip .tl{display:flex;justify-content:space-between;gap:12px}
+.calc{display:grid;gap:10px}
+.coinrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.coinrow label{width:84px;font-size:12px;color:var(--mute)}
+.coin{display:flex;align-items:center;gap:4px}.coin input{width:70px;text-align:right}.coin i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.coin i.g{background:#e8b100}.coin i.s{background:#c4c8cc}.coin i.c{background:#b8693a}
+.conv{border-top:1px solid var(--line);padding:10px 4px;cursor:pointer}.conv:first-of-type{border-top:0}.conv:hover{background:rgba(255,209,0,.03)}
+.convhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.arrow{color:var(--mute);font-size:13px}
+.convstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;margin-top:6px;font-size:13px}
+.convstats span.k{color:var(--mute)}
+.picker{position:relative}.picker input{width:100%}
+.charcard{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.charimg{width:84px;height:84px;border-radius:6px;border:1px solid var(--edge);object-fit:cover;background:linear-gradient(#2a2418,#14100a);display:flex;align-items:center;justify-content:center;font:700 28px Cinzel,serif;color:var(--gold);flex:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Forever <span>AH Exchange</span></h1>
+  <select id="house" aria-label="Auction house"></select>
+  <span class="sub" id="updated"></span>
+  <span style="flex:1"></span>
+  <span class="sub">AH cut <span id="cut"></span></span>
+</header>
+<main>
+  <div id="sampleBanner" class="banner" hidden>Showing <b>sample data</b>. Prices and sales are invented so you can try the dashboard. It switches to real data automatically once the collector has run.</div>
+
+  <div class="grid3">
+    <section class="panel"><h2>Top 5 spikes <span class="badge b-up">sell into these</span></h2><div id="spikes"></div></section>
+    <section class="panel"><h2>Heating up <span class="badge b-blue">buy before the price moves</span></h2><div id="heating"></div></section>
+    <section class="panel"><h2>Best flips <span class="badge b-gold">after AH cut</span></h2><div id="flips"></div></section>
+  </div>
+  <div id="resets"></div>
+
+  <section class="panel">
+    <h2>Essence exchange <span class="badge b-gold">split 1 → 3 · combine 3 → 1</span></h2>
+    <p class="sub" style="margin:-4px 0 8px">Buy at the cheapest listing, convert by right-clicking, sell at market price. Profit is after the AH cut. Click a row for its history and the best times to do it.</p>
+    <div id="convs"></div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel" id="explorer">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="search" style="flex:1;min-width:220px"><input id="q" placeholder="Search an item, e.g. Copper Ore" autocomplete="off"><div class="results" id="results" hidden></div></div>
+        <div class="seg" id="range"><button data-d="1">1d</button><button data-d="7" class="on">7d</button><button data-d="30">30d</button></div>
+      </div>
+      <div id="detail"><p class="empty">Pick an item from a list or search to see its history.</p></div>
+    </section>
+    <div style="display:grid;gap:16px;align-content:start">
+      <section class="panel">
+        <h2>Craft pathways</h2>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span class="sub">For</span><select id="craftChar"></select></div>
+        <div id="crafts"></div>
+      </section>
+      <section class="panel">
+        <h2>Watchlist</h2><div id="watch"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <section class="panel">
+      <h2>Characters and professions</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><select id="profChar"></select><button id="addChar">Add character</button><button id="delChar">Remove</button></div>
+      <div id="profEditor"></div>
+    </section>
+    <section class="panel">
+      <h2>Profit calculator</h2>
+      <div class="calc">
+        <div class="coinrow"><label>Buy item</label><div class="picker" style="flex:1"><input id="pickBuy" placeholder="Pick an item to fill in its cheapest price" autocomplete="off"><div class="results" id="pickBuyRes" hidden></div></div></div>
+        <div class="coinrow"><label>Buy price<br><span class="sub">each</span></label>
+          <span class="coin"><input id="bG" type="number" min="0" step="1" value="0" aria-label="Buy gold"><i class="g"></i></span>
+          <span class="coin"><input id="bS" type="number" min="0" max="99" step="1" value="50" aria-label="Buy silver"><i class="s"></i></span>
+          <span class="coin"><input id="bC" type="number" min="0" max="99" step="1" value="0" aria-label="Buy copper"><i class="c"></i></span></div>
+        <div class="coinrow"><label>Sell item</label><div class="picker" style="flex:1"><input id="pickSell" placeholder="Same item, or what you turn it into" autocomplete="off"><div class="results" id="pickSellRes" hidden></div></div></div>
+        <div class="coinrow"><label>Sell price<br><span class="sub">each</span></label>
+          <span class="coin"><input id="sG" type="number" min="0" step="1" value="0" aria-label="Sell gold"><i class="g"></i></span>
+          <span class="coin"><input id="sS" type="number" min="0" max="99" step="1" value="80" aria-label="Sell silver"><i class="s"></i></span>
+          <span class="coin"><input id="sC" type="number" min="0" max="99" step="1" value="0" aria-label="Sell copper"><i class="c"></i></span></div>
+        <div class="coinrow"><label>Quantity<br><span class="sub">you buy</span></label><input id="cQty" type="number" min="1" step="1" value="20" style="width:100px">
+          <label style="width:auto;margin-left:10px">Units out<br><span class="sub">per one bought</span></label><input id="cYield" type="number" min="1" step="1" value="1" style="width:70px" title="3 for a Greater → 3 Lesser essence split"></div>
+        <div id="calcErr" class="err"></div>
+      </div>
+      <div class="tiles" id="calcOut"></div>
+      <p class="sub">Totals use the quantity. "You receive" is after this house's AH cut. Break-even is the lowest sell price that doesn't lose gold.</p>
+    </section>
+  </div>
+</main>
+
+<div id="tip"></div>
+<script>
+const S = window.STATIC || null;
+const SITE = !!window.SITE;  // online (GitHub Pages) version: reads prebuilt JSON files
+const state = {house: null, days: 7, item: null, meta: null, ov: null, profiles: null, charts: {}};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function localProfiles(fallback) {
+  try { return JSON.parse(localStorage.getItem('profiles')) || fallback; } catch { return fallback; }
+}
+function expandSeries(c) {
+  const out = [];
+  for (let i = 0; i < c.mkt.length; i++) if (c.mkt[i] != null)
+    out.push({ts: c.t0 + i * c.step, min_price: c.min[i], market_price: c.mkt[i], qty: c.qty[i], est_sold: c.sold[i]});
+  return out;
+}
+async function api(path, opts) {
+  if (SITE) {
+    const [p, qs] = path.split('?'); const q = new URLSearchParams(qs || '');
+    const get = async f => { const r = await fetch('data/' + f, {cache: 'no-cache'}); return r.ok ? r.json() : null; };
+    if (p === '/api/meta') return get('meta.json');
+    if (p === '/api/overview') return get(`overview_${q.get('house')}.json`);
+    if (p === '/api/conversions') return get(`conversions_${q.get('house')}.json`);
+    if (p.startsWith('/api/item/')) { const d = await get(`items/${q.get('house')}/${p.split('/').pop()}.json`);
+      if (d && d.series_c) d.series = expandSeries(d.series_c); return d; }
+    if (p === '/api/profiles') {
+      const empty = {characters: [{id: 'main', label: 'Main', name_surname: '', professions: [{name: 'Mining', skill: 1}]}]};
+      if (opts && opts.method === 'POST') { try { localStorage.setItem('profiles', opts.body); } catch {} return JSON.parse(opts.body); }
+      return localProfiles(empty);
+    }
+    if (p.startsWith('/api/sync/')) return {error: 'Sync from Blizzard isn\'t on the online version yet. Set your skills by hand; they\'re saved in this browser.'};
+  }
+  if (S) {
+    const [p, qs] = path.split('?'); const q = new URLSearchParams(qs || '');
+    if (p === '/api/meta') return S.meta;
+    if (p === '/api/overview') return S.overviews[q.get('house')];
+    if (p === '/api/conversions') return S.conversions[q.get('house')];
+    if (p.startsWith('/api/item/')) return S.items[q.get('house')][p.split('/').pop()];
+    if (p === '/api/profiles') {
+      if (opts && opts.method === 'POST') { localStorage.setItem('profiles', opts.body); return JSON.parse(opts.body); }
+      try { return JSON.parse(localStorage.getItem('profiles')) || S.profiles; } catch { return S.profiles; }
+    }
+    if (p.startsWith('/api/sync/')) return {error: 'Syncing needs the real app running on your PC.'};
+  }
+  const r = await fetch(path, opts); return r.json();
+}
+
+function coins(c) {
+  c = Math.round(Math.abs(c));
+  return {g: Math.floor(c / 10000), s: Math.floor(c % 10000 / 100), c: c % 100};
+}
+// Money as gold/silver/copper coins (HTML). Big amounts drop copper to stay readable.
+function gold(c) {
+  if (c == null || isNaN(c)) return '—';
+  const neg = c < 0, k = coins(c), parts = [];
+  if (k.g) parts.push(`${k.g.toLocaleString()}<i class="g"></i>`);
+  if (k.s || k.g) parts.push(`${k.s}<i class="s"></i>`);
+  if (!k.g || k.g < 100) parts.push(`${k.c}<i class="c"></i>`);
+  return `<span class="money${neg ? ' neg' : ''}">${neg ? '−' : ''}${parts.join(' ')}</span>`;
+}
+// Plain text version for chart labels
+function goldText(c) {
+  if (c == null || isNaN(c)) return '';
+  const k = coins(c), neg = c < 0 ? '-' : '';
+  return neg + (k.g ? `${k.g.toLocaleString()}g ${k.s}s` : k.s ? `${k.s}s ${k.c}c` : `${k.c}c`);
+}
+const qcls = q => q ? 'q-' + String(q).split(' ')[0] : 'q-Common';
+function icon(it, big) {
+  const q = qcls(it && it.quality), sz = big ? ' lg' : '';
+  if (it && it.icon) return `<img class="icon${sz} ${q}" src="${esc(it.icon)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'icon ph${sz} ${q}',textContent:'?'}))">`;
+  const name = (it && it.name) || '?';
+  return `<span class="icon ph${sz} ${q}">${esc(name.replace(/^Item \d+$/, '?')[0])}</span>`;
+}
+const info = id => (state.itemMap && state.itemMap[id]) || {item_id: id, name: 'Item ' + id};
+function itemName(it) { return `<span class="${qcls(it.quality)}">${esc(it.name || 'Item ' + it.item_id)}</span>`; }
+const pct = (x, d = 0) => x == null ? '—' : (x > 0 ? '+' : '') + (x * 100).toFixed(d) + '%';
+const cls = x => x == null ? '' : x > 0 ? 'up' : x < 0 ? 'down' : '';
+function verdictBadge(v) {
+  const m = {'Buy': 'b-up', 'Sell now': 'b-gold', 'Hold': '', 'Wait: still falling': 'b-warn', 'Avoid: possible reset': 'b-down'};
+  return `<span class="badge ${m[v] ?? ''}">${esc(v)}</span>`;
+}
+
+async function init() {
+  state.meta = await api('/api/meta');
+  $('sampleBanner').hidden = !state.meta.sample;
+  $('house').innerHTML = state.meta.houses.map(h => `<option value="${esc(h.house_key)}">${esc(h.name)}</option>`).join('');
+  state.house = localStorage.getItem('house') || state.meta.default_house || state.meta.houses[0]?.house_key;
+  if (!state.meta.houses.some(h => h.house_key === state.house)) state.house = state.meta.houses[0]?.house_key;
+  $('house').value = state.house;
+  $('house').onchange = () => { state.house = $('house').value; localStorage.setItem('house', state.house); load(); };
+  document.querySelectorAll('#range button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#range button').forEach(x => x.classList.toggle('on', x === b));
+    state.days = +b.dataset.d; if (state.item) showItem(state.item);
+  });
+  state.profiles = await api('/api/profiles');
+  setupSearch(); renderProfiles(); await load();
+}
+
+async function load() {
+  state.ov = await api('/api/overview?house=' + encodeURIComponent(state.house));
+  const ov = state.ov;
+  state.itemMap = Object.fromEntries(ov.items.map(i => [i.item_id, i]));
+  $('cut').textContent = (ov.ah_cut * 100).toFixed(0) + '%';
+  $('updated').textContent = ov.last_update ? (SITE ? 'Prices as of ' : 'Data hour: ') + new Date(ov.last_update * 1000).toLocaleString([], {weekday: 'short', hour: 'numeric', minute: '2-digit'}) : '';
+  list('spikes', ov.tops.spikes, x => `<span class="num up">${pct(x.pct_vs7)}</span>`, x => `vs 7-day avg · now ${gold(x.price)}`, 'No spikes this hour.');
+  list('heating', ov.tops.heating, x => `<span class="num gold">${(x.velocity ?? 0).toFixed(1)}×</span>`, x => `selling vs normal · ${gold(x.price)} (${pct(x.pct_vs7)})`, 'Nothing heating up right now.');
+  list('flips', ov.tops.flips, x => `<span class="num up">${pct(x.flip_roi)}</span>`, x => `buy ${gold(x.min_price)} → sell ~${gold(x.ma7)}`, 'No flips above 10% ROI right now.');
+  $('resets').innerHTML = ov.tops.resets.length ? `<div class="banner">Possible market reset: ${ov.tops.resets.map(x => `<b>${esc(x.name)}</b>`).join(', ')}. Supply crashed and the price jumped in the same hour. Buying into it is risky.</div>` : '';
+  renderCrafts(); renderWatch(); calc(); loadConversions();
+  if (state.item) showItem(state.item);
+}
+
+function list(id, rows, right, sub, empty) {
+  $(id).innerHTML = rows.length ? rows.map(x => `<div class="row" data-id="${x.item_id}">${icon(x)}<div class="nm"><div class="t">${itemName(x)}</div><div class="sub">${sub(x)}</div></div>${right(x)}</div>`).join('') : `<p class="empty">${empty}</p>`;
+  $(id).querySelectorAll('.row').forEach(r => r.onclick = () => showItem(+r.dataset.id));
+}
+
+function setupSearch() {
+  const q = $('q'), res = $('results');
+  q.oninput = () => {
+    const t = q.value.trim().toLowerCase();
+    if (!t) { res.hidden = true; return; }
+    const hits = state.ov.items.filter(i => i.name.toLowerCase().includes(t) || String(i.item_id) === t).slice(0, 12);
+    res.innerHTML = hits.map(i => `<div data-id="${i.item_id}">${icon(i)}<span style="flex:1">${itemName(i)}</span><span class="sub">${gold(i.price)}</span></div>`).join('') || '<div class="sub">No match</div>';
+    res.hidden = false;
+    res.querySelectorAll('[data-id]').forEach(d => d.onclick = () => { res.hidden = true; q.value = ''; showItem(+d.dataset.id); });
+  };
+  document.addEventListener('click', e => { if (!e.target.closest('.search')) res.hidden = true; });
+}
+
+const watchlist = () => { try { return JSON.parse(localStorage.getItem('watch')) || []; } catch { return []; } };
+function toggleWatch(id) {
+  let w = watchlist(); w = w.includes(id) ? w.filter(x => x !== id) : [...w, id];
+  localStorage.setItem('watch', JSON.stringify(w)); renderWatch(); if (state.item === id) $('star').classList.toggle('on', w.includes(id));
+}
+function renderWatch() {
+  const w = watchlist(), items = state.ov.items.filter(i => w.includes(i.item_id));
+  $('watch').innerHTML = items.length ? items.map(x => `<div class="row" data-id="${x.item_id}">${icon(x)}<div class="nm"><div class="t">${itemName(x)}</div><div class="sub">${gold(x.price)} · <span class="${cls(x.pct_vs7)}">${pct(x.pct_vs7)}</span> vs 7d</div></div>${verdictBadge(x.verdict)}</div>`).join('') : '<p class="empty">Star an item to track it here.</p>';
+  $('watch').querySelectorAll('.row').forEach(r => r.onclick = () => showItem(+r.dataset.id));
+}
+
+async function showItem(id) {
+  state.item = id;
+  const d = await api(`/api/item/${id}?house=${encodeURIComponent(state.house)}&days=30`);
+  if (!d || !d.series) { $('detail').innerHTML = '<p class="empty">No data for this item in this house.</p>'; return; }
+  const cutoff = d.series.length ? d.series[d.series.length - 1].ts - state.days * 86400 : 0;
+  const ser = d.series.filter(p => p.ts > cutoff);
+  const watched = watchlist().includes(id);
+  const lh = d.long_hold_score == null ? '—' : d.long_hold_score + '/100';
+  $('detail').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-top:14px"><button class="star ${watched ? 'on' : ''}" id="star" aria-label="Watch item">★</button>
+      ${icon(d, true)}<div style="flex:1"><div style="font:700 18px Cinzel,serif" class="${qcls(d.quality)}">${esc(d.name || 'Item ' + id)}</div><div class="sub">${esc([d.quality, d.item_class].filter(Boolean).join(' · '))}${d.vendor_sell ? ' · vendor ' + gold(d.vendor_sell) : ''}</div></div>${verdictBadge(d.verdict)}</div>
+    <div class="tiles">
+      <div class="tile"><div class="k">Market price</div><div class="v">${gold(d.price)}</div><div class="sub">cheapest ${gold(d.min_price)}</div></div>
+      <div class="tile"><div class="k">vs 7-day avg</div><div class="v ${cls(d.pct_vs7)}">${pct(d.pct_vs7)}</div><div class="sub">1h ${pct(d.pct_1h, 1)} · 30d ${pct(d.pct_vs30)}</div></div>
+      <div class="tile"><div class="k">Sold last hour</div><div class="v">${d.sold_last_hour ?? '—'}</div><div class="sub">normal ${(d.sold_per_hour_normal ?? 0).toFixed(1)}/h · ${d.velocity != null ? d.velocity.toFixed(1) + '×' : '—'}</div></div>
+      <div class="tile"><div class="k">Sells per day</div><div class="v">${Math.round(d.daily_sold ?? 0).toLocaleString()}</div><div class="sub">${(d.qty ?? 0).toLocaleString()} listed · ${d.days_supply != null ? d.days_supply.toFixed(1) + ' days supply' : ''}</div></div>
+      <div class="tile"><div class="k">Hold score</div><div class="v">${d.hold_score ?? '—'}/100</div><div class="sub">long hold ${lh}</div></div>
+      <div class="tile"><div class="k">Break-even sell</div><div class="v">${gold(d.break_even)}</div><div class="sub">if bought at cheapest</div></div>
+    </div>
+    <div class="chartbox"><canvas id="chPrice"></canvas></div>
+    <h3 style="margin-top:14px">Sold per hour vs normal</h3><div class="chartbox sm"><canvas id="chSold"></canvas></div>
+    <h3 style="margin-top:14px">Quantity listed</h3><div class="chartbox sm"><canvas id="chQty"></canvas></div>
+    <div class="grid2" style="margin-top:12px;gap:12px">
+      <div><h3>Long hold</h3><ul class="steps" style="padding-left:16px">${(d.long_hold_reasons || []).map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>
+      <div><h3>Other auction houses</h3>${(d.other_houses || []).map(o => `<div class="sub" style="display:flex;justify-content:space-between"><span>${esc(o.name)}</span><span>${gold(o.market_price)} · ${o.qty} listed</span></div>`).join('')}</div>
+    </div>`;
+  $('star').onclick = () => toggleWatch(id);
+  drawCharts(ser, d);
+  $('explorer').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+}
+
+function rolling(arr, n) { const out = []; let sum = 0, cnt = 0; const q = [];
+  for (const v of arr) { q.push(v); if (v != null) { sum += v; cnt++; } if (q.length > n) { const o = q.shift(); if (o != null) { sum -= o; cnt--; } } out.push(cnt ? sum / cnt : null); } return out; }
+
+function drawCharts(ser, d) {
+  Object.values(state.charts).forEach(c => c.destroy()); state.charts = {};
+  const labels = ser.map(p => new Date(p.ts * 1000));
+  const fmtLabel = t => state.days <= 1 ? t.toLocaleTimeString([], {hour: 'numeric'}) : t.toLocaleDateString([], {month: 'short', day: 'numeric'});
+  const all = d.series.map(p => p.market_price), off = d.series.length - ser.length;
+  const ma24 = rolling(all, 24).slice(off), ma168 = rolling(all, 168).slice(off);
+  const soldAll = d.series.map(p => p.est_sold), how = d.series.map(p => Math.floor(p.ts / 3600) % 168);
+  const normal = ser.map((p, i) => { const k = off + i, h = how[k]; let s = 0, c = 0;
+    for (let j = k - 168; j >= 0 && j >= k - 168 * 4; j -= 168) if (how[j] === h) { s += soldAll[j]; c++; } return c ? s / c : null; });
+  const base = {responsive: true, maintainAspectRatio: false, animation: false, interaction: {mode: 'index', intersect: false},
+    plugins: {legend: {labels: {color: '#9a9c9f', boxWidth: 10}}},
+    scales: {x: {ticks: {color: '#9a9c9f', maxTicksLimit: 8, callback: (v, i) => fmtLabel(labels[i])}, grid: {color: '#23272e'}}, y: {ticks: {color: '#9a9c9f'}, grid: {color: '#23272e'}}}};
+  const goldAxis = JSON.parse(JSON.stringify(base)); goldAxis.scales.y.ticks.callback = v => goldText(v);
+  goldAxis.plugins.tooltip = {callbacks: {label: c => `${c.dataset.label}: ${goldText(c.raw)}`, title: c => labels[c[0].dataIndex].toLocaleString()}};
+  goldAxis.scales.x.ticks.callback = (v, i) => fmtLabel(labels[i]);
+  goldAxis.plugins.legend = base.plugins.legend;
+  state.charts.p = new Chart($('chPrice'), {type: 'line', data: {labels, datasets: [
+    {label: 'Market', data: ser.map(p => p.market_price), borderColor: '#e0b84f', borderWidth: 2, pointRadius: 0, tension: .2},
+    {label: 'Cheapest', data: ser.map(p => p.min_price), borderColor: '#6aa8ff', borderWidth: 1, pointRadius: 0, tension: .2},
+    {label: '24h avg', data: ma24, borderColor: '#9a9c9f', borderWidth: 1, borderDash: [4, 3], pointRadius: 0},
+    {label: '7-day avg', data: ma168, borderColor: '#4cc38a', borderWidth: 1, borderDash: [6, 4], pointRadius: 0}]}, options: goldAxis});
+  const soldOpts = JSON.parse(JSON.stringify(base)); soldOpts.scales.x.ticks.callback = (v, i) => fmtLabel(labels[i]);
+  soldOpts.plugins.tooltip = {callbacks: {title: c => labels[c[0].dataIndex].toLocaleString()}};
+  state.charts.s = new Chart($('chSold'), {data: {labels, datasets: [
+    {type: 'bar', label: 'Sold (est.)', data: ser.map(p => p.est_sold), backgroundColor: 'rgba(224,184,79,.55)'},
+    {type: 'line', label: 'Normal for this hour', data: normal, borderColor: '#4cc38a', borderWidth: 1.5, pointRadius: 0}]}, options: soldOpts});
+  const qOpts = JSON.parse(JSON.stringify(soldOpts)); qOpts.scales.x.ticks.callback = (v, i) => fmtLabel(labels[i]);
+  qOpts.plugins.tooltip = soldOpts.plugins.tooltip;
+  state.charts.q = new Chart($('chQty'), {type: 'line', data: {labels, datasets: [
+    {label: 'Listed', data: ser.map(p => p.qty), borderColor: '#6aa8ff', backgroundColor: 'rgba(106,168,255,.12)', fill: true, borderWidth: 1.5, pointRadius: 0}]}, options: qOpts});
+}
+
+function renderCrafts() {
+  const chars = state.profiles.characters;
+  const sel = $('craftChar'); const prev = sel.value;
+  sel.innerHTML = chars.map(c => `<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('');
+  if (chars.some(c => c.id === prev)) sel.value = prev;
+  sel.onchange = renderCrafts;
+  let list = (state.ov.crafts || {})[sel.value] || [];
+  if (state.ov.crafts_all) {  // online version: filter every pathway by this character's skills
+    const ch = chars.find(c => c.id === sel.value), skills = Object.fromEntries((ch?.professions || []).map(p => [p.name, p.skill]));
+    list = state.ov.crafts_all.filter(r => skills[r.profession] != null && skills[r.profession] >= r.skill_needed - 15)
+      .map(r => ({...r, unlocked: skills[r.profession] >= r.skill_needed}))
+      .sort((a, b) => (b.unlocked - a.unlocked) || (b.daily_gold_potential - a.daily_gold_potential));
+  }
+  const rows = list.filter(x => x.profit_per_craft > 0 || !x.unlocked).slice(0, 6);
+  $('crafts').innerHTML = rows.length ? rows.map(x => `<div class="craft">
+      <div style="display:flex;gap:8px;align-items:center">${icon({icon: x.product_icon, quality: x.product_quality, name: x.product})}<b style="flex:1">${esc(x.recipe)}</b>${x.unlocked ? '' : `<span class="badge b-blue">Unlocks at ${x.skill_needed}</span>`}<span class="num up">${gold(x.daily_gold_potential)}/day</span></div>
+      <div class="sub">${gold(x.profit_per_craft)} per craft · ${x.margin != null ? pct(x.margin) + ' margin' : ''} · market buys ${x.market_sells_per_day}/day</div>
+      ${x.why.length ? `<div class="sub gold">${x.why.map(esc).join(' · ')}</div>` : ''}
+      <ol class="steps">${x.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol></div>`).join('')
+    : '<p class="empty">No profitable crafts for this character right now. Add professions below or check back next hour.</p>';
+}
+
+function renderProfiles() {
+  const chars = state.profiles.characters; const sel = $('profChar'); const prev = sel.value;
+  sel.innerHTML = chars.map(c => `<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('');
+  if (chars.some(c => c.id === prev)) sel.value = prev;
+  sel.onchange = renderProfiles;
+  const c = chars.find(x => x.id === sel.value); if (!c) { $('profEditor').innerHTML = '<p class="empty">Add a character to get started.</p>'; return; }
+  const opts = n => state.meta.professions.map(p => `<option ${p === n ? 'selected' : ''}>${esc(p)}</option>`).join('');
+  const sm = c.summary || {};
+  const pic = c.render || c.avatar;
+  const picHtml = pic ? `<img class="charimg" src="${esc(pic)}" alt="" onerror="this.outerHTML='<div class=charimg>${esc((c.label || '?')[0])}</div>'">`
+                      : `<div class="charimg">${esc((c.label || '?')[0])}</div>`;
+  $('profEditor').innerHTML = `
+    <div class="charcard">${picHtml}<div><div style="font:700 18px Cinzel,serif;color:var(--gold)">${esc(c.name_surname || c.label)}</div>
+      <div class="sub">${sm.level ? `Level ${sm.level} ` : ''}${esc([sm.race, sm.class].filter(Boolean).join(' '))}${sm.faction ? ' · ' + esc(sm.faction) : ''}${!sm.level && !pic ? 'Add Name-Surname and press Sync to load your character' : ''}</div></div></div>
+    <div class="calc" style="grid-template-columns:1fr 1fr;margin-bottom:8px">
+      <div><label for="pLabel">Label</label><input id="pLabel" value="${esc(c.label)}"></div>
+      <div><label for="pName">Character (Name-Surname)</label><input id="pName" value="${esc(c.name_surname)}" placeholder="Thrall-Stormborn"></div>
+    </div>
+    <div id="profRows">${c.professions.map((p, i) => `<div class="prof" data-i="${i}"><select>${opts(p.name)}</select><input type="range" min="1" max="300" step="1" value="${p.skill}"><input type="number" min="1" max="300" step="1" value="${p.skill}"><button class="star" aria-label="Remove profession">×</button></div>`).join('')}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="addProf">Add profession</button><button id="sync">Sync from Blizzard</button><span style="flex:1"></span><button class="primary" id="saveProf">Save</button></div>
+    <p class="sub" id="profMsg">Skill is 1–300 per profession. Update it as you level and your craft suggestions change with it.</p>`;
+  document.querySelectorAll('#profRows .prof').forEach(row => {
+    const [r, n] = row.querySelectorAll('input');
+    r.oninput = () => n.value = r.value; n.oninput = () => r.value = n.value;
+    row.querySelector('button').onclick = () => { collect(c); c.professions.splice(+row.dataset.i, 1); renderProfiles(); };
+  });
+  $('addProf').onclick = () => { collect(c); c.professions.push({name: state.meta.professions.find(p => !c.professions.some(x => x.name === p)), skill: 1}); renderProfiles(); };
+  $('saveProf').onclick = async () => {
+    collect(c);
+    for (const p of c.professions) if (!(p.skill >= 1 && p.skill <= 300)) { $('profMsg').innerHTML = '<span class="err">Skill must be between 1 and 300.</span>'; return; }
+    await saveProfiles(); $('profMsg').textContent = 'Saved. Craft suggestions updated.';
+  };
+  $('sync').onclick = async () => {
+    collect(c);
+    if (!c.name_surname) { $('profMsg').innerHTML = '<span class="err">Enter the character\'s Name-Surname first.</span>'; return; }
+    await saveProfiles();
+    const r = await api('/api/sync/' + encodeURIComponent(c.id), {method: 'POST'});
+    if (r.error) { $('profMsg').innerHTML = `<span class="err">${esc(r.error)}</span>`; return; }
+    state.profiles = await api('/api/profiles'); renderProfiles(); await load();
+    const notes = (r.notes || []).length ? ' Note: ' + r.notes.join('; ') + '.' : '';
+    $('profMsg').textContent = (r.synced.length ? `Synced ${r.synced.length} professions.` : 'No professions came back from Blizzard.') + notes;
+  };
+}
+function collect(c) {
+  c.label = $('pLabel').value.trim() || 'Character'; c.name_surname = $('pName').value.trim();
+  c.professions = [...document.querySelectorAll('#profRows .prof')].map(row => ({name: row.querySelector('select').value, skill: +row.querySelector('input[type=number]').value}));
+}
+async function saveProfiles() {
+  state.profiles = await api('/api/profiles', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(state.profiles)});
+  renderProfiles();
+  if (S || SITE) { // browser-saved profiles: just redraw
+    renderCrafts(); return;
+  }
+  await load();
+}
+$('addChar').onclick = async () => {
+  const n = state.profiles.characters.length + 1;
+  state.profiles.characters.push({id: 'char-' + Date.now(), label: 'Alt ' + n, name_surname: '', professions: [{name: 'Herbalism', skill: 1}]});
+  await saveProfiles(); $('profChar').value = state.profiles.characters.at(-1).id; renderProfiles();
+};
+$('delChar').onclick = async () => {
+  if (state.profiles.characters.length <= 1) return;
+  state.profiles.characters = state.profiles.characters.filter(c => c.id !== $('profChar').value); await saveProfiles();
+};
+
+function readCoins(p) {
+  const v = id => Math.max(0, Math.floor(+$(id).value || 0));
+  return v(p + 'G') * 10000 + Math.min(99, v(p + 'S')) * 100 + Math.min(99, v(p + 'C'));
+}
+function setCoins(p, copper) {
+  const k = coins(copper || 0);
+  $(p + 'G').value = k.g; $(p + 'S').value = k.s; $(p + 'C').value = k.c;
+}
+function picker(inputId, resId, onPick) {
+  const q = $(inputId), res = $(resId);
+  q.oninput = () => {
+    const t = q.value.trim().toLowerCase();
+    if (!t || !state.ov) { res.hidden = true; return; }
+    const hits = state.ov.items.filter(i => i.name.toLowerCase().includes(t)).slice(0, 10);
+    res.innerHTML = hits.map(i => `<div data-pick="${i.item_id}">${icon(i)}<span style="flex:1">${itemName(i)}</span><span class="sub">${gold(i.min_price)}</span></div>`).join('') || '<div class="sub">No match</div>';
+    res.hidden = false;
+    res.querySelectorAll('[data-pick]').forEach(d => d.onclick = () => { const it = info(+d.dataset.pick); q.value = it.name; res.hidden = true; onPick(it); calc(); });
+  };
+  document.addEventListener('click', e => { if (!e.target.closest('#' + resId) && e.target !== q) res.hidden = true; });
+}
+picker('pickBuy', 'pickBuyRes', it => { setCoins('b', it.min_price ?? it.price); if (!$('pickSell').value) { $('pickSell').value = it.name; setCoins('s', it.price); } });
+picker('pickSell', 'pickSellRes', it => setCoins('s', it.price));
+function useInCalc(c, mode) {
+  const from = mode === 'split' ? c.big : c.small, to = mode === 'split' ? c.small : c.big;
+  $('pickBuy').value = from.name; $('pickSell').value = to.name;
+  setCoins('b', mode === 'split' ? from.cheapest : from.cheapest * c.ratio);
+  setCoins('s', to.price);
+  $('cYield').value = mode === 'split' ? c.ratio : 1;
+  if (mode !== 'split') $('pickBuy').value = `${c.ratio}× ${from.name}`;
+  calc(); $('calcOut').scrollIntoView({behavior: 'smooth', block: 'center'});
+}
+
+async function loadConversions() {
+  state.convs = await api('/api/conversions?house=' + encodeURIComponent(state.house)) || [];
+  const box = $('convs');
+  if (!state.convs.length) { box.innerHTML = '<p class="empty">No essence prices yet for this house. They appear after the collector has seen them listed.</p>'; return; }
+  const vb = v => `<span class="badge ${v === 'Wait' ? '' : 'b-up'}">${esc(v)}</span>`;
+  box.innerHTML = state.convs.map((c, i) => {
+    const better = c.avg_split_7d != null ? c.split_profit - c.avg_split_7d : null;
+    return `<div class="conv" data-ci="${i}">
+      <div class="convhead">${icon(c.big)}<span class="${qcls(c.big.quality)}" style="font-weight:600">${esc(c.big.name)}</span>
+        <span class="arrow">⇄ ${c.ratio}×</span>${icon(c.small)}<span class="${qcls(c.small.quality)}" style="font-weight:600">${esc(c.small.name)}</span>
+        <span style="flex:1"></span>${vb(c.verdict)}</div>
+      <div class="convstats">
+        <div><span class="k">Split profit each</span><br><b class="${cls(c.split_profit)}">${gold(c.split_profit)}</b> <span class="sub">${pct(c.split_roi)}</span></div>
+        <div><span class="k">vs its 7-day average</span><br><b class="${cls(better)}">${better == null ? '—' : gold(better)}</b></div>
+        <div><span class="k">Combine profit each</span><br><b class="${cls(c.combine_profit)}">${gold(c.combine_profit)}</b></div>
+        <div><span class="k">Greater: cheapest / market</span><br>${gold(c.big.cheapest)} / ${gold(c.big.price)}</div>
+        <div><span class="k">Lesser: cheapest / market</span><br>${gold(c.small.cheapest)} / ${gold(c.small.price)}</div>
+        <div><span class="k">Market buys per day</span><br>${c.big.daily_sold} greater · ${c.small.daily_sold} lesser</div>
+      </div>
+      <div class="convdetail" hidden></div></div>`;
+  }).join('');
+  box.querySelectorAll('.conv').forEach(el => el.onclick = e => { if (!e.target.closest('button,.convdetail')) toggleConv(+el.dataset.ci, el); });
+}
+
+function bestTimes(series, key) {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const byHour = {}, byDay = {};
+  for (const p of series) { const d = new Date(p.ts * 1000);
+    (byHour[d.getHours()] ??= []).push(p[key]); (byDay[d.getDay()] ??= []).push(p[key]); }
+  const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const fmtH = h => new Date(2000, 0, 1, h).toLocaleTimeString([], {hour: 'numeric'});
+  const hours = Object.entries(byHour).map(([h, v]) => [+h, avg(v)]).sort((a, b) => b[1] - a[1]);
+  const dayRank = Object.entries(byDay).map(([d, v]) => [days[d], avg(v)]).sort((a, b) => b[1] - a[1]);
+  return {hours: hours.slice(0, 3).map(([h, v]) => `${fmtH(h)} (${goldText(v)})`), worst: hours.slice(-2).map(([h]) => fmtH(h)),
+          days: dayRank.slice(0, 2).map(([d, v]) => `${d} (${goldText(v)})`)};
+}
+
+function toggleConv(i, el) {
+  const det = el.querySelector('.convdetail'), c = state.convs[i];
+  if (!det.hidden) { det.hidden = true; return; }
+  const mode = c.combine_profit > c.split_profit ? 'combine' : 'split';
+  const bt = bestTimes(c.series, mode);
+  det.innerHTML = `<div class="chartbox sm" style="margin-top:10px"><canvas id="convChart${i}"></canvas></div>
+    <p class="sub" style="margin:8px 0 4px">Based on ${Math.round(c.series.length / 24)} days of history, ${mode === 'split' ? 'splitting' : 'combining'} has paid best around <b class="gold">${bt.hours.join(', ')}</b> and on <b class="gold">${bt.days.join(', ')}</b> (your local time). It's usually worst around ${bt.worst.join(' and ')}.</p>
+    <div style="display:flex;gap:8px;margin-top:6px"><button data-m="split">Use split in calculator</button><button data-m="combine">Use combine in calculator</button></div>`;
+  det.hidden = false;
+  det.querySelectorAll('button').forEach(b => b.onclick = ev => { ev.stopPropagation(); useInCalc(c, b.dataset.m); });
+  const labels = c.series.map(p => new Date(p.ts * 1000));
+  new Chart($('convChart' + i), {type: 'line', data: {labels, datasets: [
+      {label: 'Split profit each', data: c.series.map(p => p.split), borderColor: '#ffd100', borderWidth: 1.5, pointRadius: 0, tension: .2},
+      {label: 'Combine profit each', data: c.series.map(p => p.combine), borderColor: '#4aa3ff', borderWidth: 1, pointRadius: 0, tension: .2},
+      {label: 'Break-even', data: c.series.map(() => 0), borderColor: '#f05d4f', borderWidth: 1, borderDash: [4, 4], pointRadius: 0}]},
+    options: {responsive: true, maintainAspectRatio: false, animation: false, interaction: {mode: 'index', intersect: false},
+      plugins: {legend: {labels: {color: '#a0937a', boxWidth: 10}}, tooltip: {callbacks: {title: t => labels[t[0].dataIndex].toLocaleString(), label: t => `${t.dataset.label}: ${goldText(t.raw)}`}}},
+      scales: {x: {ticks: {color: '#a0937a', maxTicksLimit: 8, callback: (v, k) => labels[k].toLocaleDateString([], {month: 'short', day: 'numeric'})}, grid: {color: '#2a2216'}},
+               y: {ticks: {color: '#a0937a', callback: v => goldText(v)}, grid: {color: '#2a2216'}}}}});
+}
+
+function calc() {
+  const cut = state.ov ? state.ov.ah_cut : 0.05;
+  const buy = readCoins('b'), sell = readCoins('s'), qty = Math.floor(+$('cQty').value), yld = Math.floor(+$('cYield').value);
+  if (!(qty >= 1)) { $('calcErr').textContent = 'Enter a quantity of 1 or more.'; $('calcOut').innerHTML = ''; return; }
+  if (!(yld >= 1)) { $('calcErr').textContent = 'Units out must be 1 or more.'; $('calcOut').innerHTML = ''; return; }
+  $('calcErr').textContent = '';
+  const receive = sell * yld * (1 - cut), each = receive - buy;
+  const tile = (k, v, cls = '', big = '') => `<div class="tile ${big}"><div class="k">${k}</div><div class="v ${cls}">${v}</div></div>`;
+  $('calcOut').innerHTML =
+    tile(`Total profit (×${qty})`, gold(each * qty), cls(each), 'big') +
+    tile('Profit each', gold(each), cls(each)) +
+    tile('ROI', buy ? pct(each / buy, 1) : '—', cls(each)) +
+    tile(`You pay (×${qty})`, gold(buy * qty)) +
+    tile(`You receive (×${qty * yld} sold)`, gold(receive * qty)) +
+    tile(`AH takes`, gold(sell * yld * cut * qty)) +
+    tile(yld > 1 ? 'Break-even sell (each unit out)' : 'Break-even sell', gold(buy / yld / (1 - cut)));
+}
+['bG', 'bS', 'bC', 'sG', 'sS', 'sC', 'cQty', 'cYield'].forEach(id => $(id).addEventListener('input', calc));
+
+// WoW-style item tooltip on hover
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest('[data-id]'); const tip = $('tip');
+  if (!el || !state.itemMap) { tip.style.display = 'none'; return; }
+  const it = info(+el.dataset.id);
+  tip.innerHTML = `<div class="tn ${qcls(it.quality)}">${esc(it.name)}</div>
+    ${it.item_class ? `<div class="sub">${esc(it.item_class)}</div>` : ''}
+    <div class="tl" style="margin-top:6px"><span>Market</span>${gold(it.price)}</div>
+    <div class="tl"><span>Cheapest</span>${gold(it.min_price)}</div>
+    <div class="tl"><span>Listed</span><span>${(it.qty ?? 0).toLocaleString()}</span></div>
+    <div class="tl"><span>Sells / day</span><span>${it.daily_sold ?? '—'}</span></div>
+    ${it.vendor_sell ? `<div class="tl"><span>Vendor sell</span>${gold(it.vendor_sell)}</div>` : ''}
+    <div class="tl" style="margin-top:4px"><span>Verdict</span><span class="gold">${esc(it.verdict || '')}</span></div>`;
+  tip.style.display = 'block';
+});
+document.addEventListener('mousemove', e => {
+  const tip = $('tip'); if (tip.style.display !== 'block') return;
+  const x = Math.min(e.clientX + 16, innerWidth - tip.offsetWidth - 8), y = Math.min(e.clientY + 16, innerHeight - tip.offsetHeight - 8);
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+});
+
+init();
+</script>
+</body>
+</html>

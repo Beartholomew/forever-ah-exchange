@@ -1,0 +1,78 @@
+name: Collect prices and publish dashboard
+
+on:
+  schedule:
+    - cron: "12 * * * *"   # every hour, 12 minutes past (Blizzard updates hourly)
+  workflow_dispatch:        # "Run workflow" button for a manual run
+
+permissions:
+  contents: write   # store the database in a release
+  pages: write
+  id-token: write
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      BLIZZARD_CLIENT_ID: ${{ secrets.BLIZZARD_CLIENT_ID }}
+      BLIZZARD_CLIENT_SECRET: ${{ secrets.BLIZZARD_CLIENT_SECRET }}
+      REGION: us
+      RULESET_NAME: ${{ vars.RULESET_NAME || 'Normal' }}
+      HOUSE_IDS: ${{ vars.HOUSE_IDS }}
+      DEFAULT_HOUSE: ${{ vars.DEFAULT_HOUSE || 'Alliance' }}
+      STATIC_NAMESPACE: ${{ vars.STATIC_NAMESPACE }}
+      AH_CUT_BLACKWATER: ${{ vars.AH_CUT_BLACKWATER || '0.15' }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Download price history
+        run: |
+          mkdir -p data
+          if gh release download db --pattern ah.sqlite.gz --dir data; then
+            gunzip -f data/ah.sqlite.gz && ls -lh data/ah.sqlite
+          else
+            echo "No saved history yet; starting fresh."
+          fi
+
+      - name: Collect this hour's auctions
+        run: python -m ahtracker.collector
+
+      - name: Look up new item names and icons
+        continue-on-error: true
+        run: timeout 15m python -m ahtracker.fill_names
+
+      - name: Trim old data
+        run: |
+          if [ "$(date -u +%H)" = "09" ]; then python -m ahtracker.prune --days 60 --vacuum; else python -m ahtracker.prune --days 60; fi
+
+      - name: Save price history
+        run: |
+          gzip -kf data/ah.sqlite
+          gh release view db >/dev/null 2>&1 || gh release create db --title "Price history database" --notes "Updated every hour by the collector. Don't delete."
+          gh release upload db data/ah.sqlite.gz --clobber
+
+      - name: Build dashboard
+        run: python -m ahtracker.build_site --out site
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

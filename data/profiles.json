@@ -1,0 +1,13 @@
+{
+  "characters": [
+    {
+      "id": "main",
+      "label": "Main",
+      "name_surname": "",
+      "professions": [
+        {"name": "Mining", "skill": 1},
+        {"name": "First Aid", "skill": 1}
+      ]
+    }
+  ]
+}

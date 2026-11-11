@@ -1,0 +1,24 @@
+{
+  "_note": "Starter recipes from original Classic. WoW: Forever may change recipes, skill levels or item IDs, so check these in game and edit freely. skill = level the recipe becomes available. makes = units produced per craft.",
+  "recipes": [
+    {"profession": "Mining", "name": "Smelt Copper", "skill": 1, "product": 2840, "makes": 1, "reagents": {"2770": 1}},
+    {"profession": "Mining", "name": "Smelt Tin", "skill": 65, "product": 3576, "makes": 1, "reagents": {"2771": 1}},
+    {"profession": "Mining", "name": "Smelt Bronze", "skill": 65, "product": 2841, "makes": 2, "reagents": {"2840": 1, "3576": 1}},
+    {"profession": "Mining", "name": "Smelt Silver", "skill": 75, "product": 2842, "makes": 1, "reagents": {"2775": 1}},
+    {"profession": "Mining", "name": "Smelt Iron", "skill": 125, "product": 3575, "makes": 1, "reagents": {"2772": 1}},
+    {"profession": "Mining", "name": "Smelt Gold", "skill": 155, "product": 3577, "makes": 1, "reagents": {"2776": 1}},
+    {"profession": "Mining", "name": "Smelt Mithril", "skill": 175, "product": 3860, "makes": 1, "reagents": {"3858": 1}},
+    {"profession": "Mining", "name": "Smelt Thorium", "skill": 250, "product": 12359, "makes": 1, "reagents": {"10620": 1}},
+    {"profession": "Tailoring", "name": "Bolt of Linen Cloth", "skill": 1, "product": 2996, "makes": 1, "reagents": {"2589": 2}},
+    {"profession": "Tailoring", "name": "Bolt of Woolen Cloth", "skill": 75, "product": 2997, "makes": 1, "reagents": {"2592": 3}},
+    {"profession": "Tailoring", "name": "Bolt of Silk Cloth", "skill": 125, "product": 4305, "makes": 1, "reagents": {"4306": 4}},
+    {"profession": "First Aid", "name": "Linen Bandage", "skill": 1, "product": 1251, "makes": 1, "reagents": {"2589": 1}},
+    {"profession": "First Aid", "name": "Heavy Linen Bandage", "skill": 40, "product": 2581, "makes": 1, "reagents": {"2589": 2}},
+    {"profession": "First Aid", "name": "Wool Bandage", "skill": 80, "product": 3530, "makes": 1, "reagents": {"2592": 1}},
+    {"profession": "First Aid", "name": "Heavy Wool Bandage", "skill": 115, "product": 3531, "makes": 1, "reagents": {"2592": 2}},
+    {"profession": "First Aid", "name": "Silk Bandage", "skill": 150, "product": 6450, "makes": 1, "reagents": {"4306": 1}},
+    {"profession": "First Aid", "name": "Heavy Silk Bandage", "skill": 180, "product": 6451, "makes": 1, "reagents": {"4306": 2}},
+    {"profession": "First Aid", "name": "Mageweave Bandage", "skill": 210, "product": 8544, "makes": 1, "reagents": {"4338": 1}},
+    {"profession": "First Aid", "name": "Runecloth Bandage", "skill": 260, "product": 14529, "makes": 1, "reagents": {"14047": 1}}
+  ]
+}

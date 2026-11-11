@@ -1,0 +1,10 @@
+{
+  "_note": "Item conversions you can do by right-clicking, e.g. 1 Greater essence <-> 3 Lesser. IDs are from original Classic; check them in game (Forever may change them) and add your own.",
+  "conversions": [
+    {"name": "Magic Essence", "big": 10939, "small": 10938, "ratio": 3},
+    {"name": "Astral Essence", "big": 11082, "small": 10998, "ratio": 3},
+    {"name": "Mystic Essence", "big": 11135, "small": 11134, "ratio": 3},
+    {"name": "Nether Essence", "big": 11175, "small": 11174, "ratio": 3},
+    {"name": "Eternal Essence", "big": 16203, "small": 16202, "ratio": 3}
+  ]
+}
