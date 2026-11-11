@@ -2,7 +2,7 @@ name: Collect prices and publish dashboard
 
 on:
   schedule:
-    - cron: "12,42 * * * *"   # twice an hour; Blizzard publishes once an hour at no fixed minute
+    - cron: "17,47 * * * *"   # backup timer; the Cloudflare Worker starts runs at :00 and :30
   workflow_dispatch:        # "Run workflow" button for a manual run
 
 permissions:
