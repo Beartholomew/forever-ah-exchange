@@ -2,7 +2,7 @@ name: Collect prices and publish dashboard
 
 on:
   schedule:
-    - cron: "12 * * * *"   # every hour, 12 minutes past (Blizzard updates hourly)
+    - cron: "12,42 * * * *"   # twice an hour; Blizzard publishes once an hour at no fixed minute
   workflow_dispatch:        # "Run workflow" button for a manual run
 
 permissions:

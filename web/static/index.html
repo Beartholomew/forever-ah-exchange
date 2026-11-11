@@ -249,7 +249,10 @@ async function load() {
   const ov = state.ov;
   state.itemMap = Object.fromEntries(ov.items.map(i => [i.item_id, i]));
   $('cut').textContent = (ov.ah_cut * 100).toFixed(0) + '%';
-  $('updated').textContent = ov.last_update ? (SITE ? 'Prices as of ' : 'Data hour: ') + new Date(ov.last_update * 1000).toLocaleString([], {weekday: 'short', hour: 'numeric', minute: '2-digit'}) : '';
+  const hourLabel = t => new Date(t * 1000).toLocaleString([], {weekday: 'short', hour: 'numeric'});
+  const timeLabel = t => new Date(t * 1000).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+  $('updated').textContent = ov.last_update ? `Blizzard data: ${hourLabel(ov.last_update)} hour` +
+    (SITE && state.meta.built ? ` · site checked ${timeLabel(state.meta.built)} (checks twice an hour)` : '') : '';
   const need = k => {
     const h = ov.tops.history_hours, n = (ov.tops.needs_hours || {})[k];
     return n && h < n ? `Collecting history: ${h} of ${n} hours so far. This list starts once there's enough to compare against.` : null;
