@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import time
 from pathlib import Path
@@ -61,7 +62,8 @@ def build(db_path: Path, out: Path, days: int = 14) -> dict:
     default = next((h["house_key"] for h in houses if s.default_house.lower() in h["name"].lower()),
                    houses[0]["house_key"] if houses else None)
     _dump(out / "data" / "meta.json", {"sample": False, "houses": houses, "default_house": default,
-                                         "professions": service.PROFESSIONS, "built": int(time.time())})
+                                         "professions": service.PROFESSIONS, "built": int(time.time()),
+                                         "sync_url": os.environ.get("SYNC_URL", "")})
     all_stats = {h["house_key"]: analytics.compute_stats(con, h["house_key"]) for h in houses}
     counts = {}
     for h in houses:

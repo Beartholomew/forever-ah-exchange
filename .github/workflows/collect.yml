@@ -30,6 +30,7 @@ jobs:
       DEFAULT_HOUSE: ${{ vars.DEFAULT_HOUSE || 'Alliance' }}
       STATIC_NAMESPACE: ${{ vars.STATIC_NAMESPACE || 'static-1.60.1_70399-forever-us' }}
       AH_CUT_BLACKWATER: ${{ vars.AH_CUT_BLACKWATER || '0.15' }}
+      SYNC_URL: ${{ vars.SYNC_URL || '' }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4

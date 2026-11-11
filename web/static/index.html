@@ -176,7 +176,23 @@ async function api(path, opts) {
       if (opts && opts.method === 'POST') { try { localStorage.setItem('profiles', opts.body); } catch {} return JSON.parse(opts.body); }
       return localProfiles(empty);
     }
-    if (p.startsWith('/api/sync/')) return {error: 'Sync from Blizzard isn\'t on the online version yet. Set your skills by hand; they\'re saved in this browser.'};
+    if (p.startsWith('/api/sync/')) {
+      const url = state.meta && state.meta.sync_url;
+      if (!url) return {error: 'Sync isn\'t switched on for this site yet. Set your skills by hand; they\'re saved in this browser.'};
+      const ch = state.profiles.characters.find(c => c.id === decodeURIComponent(p.split('/').pop()));
+      let r;
+      try { r = await (await fetch(`${url.replace(/\/$/, '')}/sync?name=${encodeURIComponent(ch.name_surname)}`)).json(); }
+      catch { return {error: 'Couldn\'t reach the sync helper. Try again in a minute.'}; }
+      if (r.error) return {error: r.error};
+      if (r.summary) ch.summary = r.summary;
+      if (r.avatar) ch.avatar = r.avatar;
+      if (r.render) ch.render = r.render;
+      const known = new Set(state.meta.professions);
+      const profs = (r.professions || []).filter(x => known.has(x.name));
+      if (profs.length) ch.professions = profs;
+      try { localStorage.setItem('profiles', JSON.stringify(state.profiles)); } catch {}
+      return {synced: profs, notes: r.notes || []};
+    }
   }
   if (S) {
     const [p, qs] = path.split('?'); const q = new URLSearchParams(qs || '');
