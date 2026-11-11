@@ -77,7 +77,6 @@ def build(db_path: Path, out: Path, days: int = 14) -> dict:
                                 "vendor_sell": st.vendor_sell, "daily_sold": round(st.daily_sold, 1)}
                                for st in stats.values()), key=lambda x: x["name"])}
         _dump(out / "data" / f"overview_{key}.json", ov)
-        _dump(out / "data" / f"conversions_{key}.json", service.conversions(con, s, key))
 
         by_item: dict[int, list[dict]] = {}
         for r in con.execute("SELECT item_id, ts, min_price, market_price, qty, est_sold FROM item_hour "

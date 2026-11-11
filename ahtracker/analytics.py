@@ -220,19 +220,29 @@ def passes_filters(st: ItemStats, s: Settings) -> bool:
     return (st.price or 0) >= s.min_price_copper and st.daily_sold >= s.min_daily_sold and st.listings >= s.min_listings
 
 
+MIN_HOURS = {"spikes": 24, "flips": 24, "resets": 24, "heating": 48}
+
+
 def top_lists(stats: dict[int, ItemStats], s: Settings, cut: float, n: int = 5) -> dict:
-    pool = [st for st in stats.values() if passes_filters(st, s)]
+    """Top 5 lists. Each list waits until there's enough history to compare against,
+    and skips items Blizzard hasn't given a name yet (you can't act on 'Item 12345')."""
+    hours = max((st.days_of_history for st in stats.values()), default=0) * 24 + 1
+    pool = [st for st in stats.values() if passes_filters(st, s) and st.name]
     for st in pool:
         if st.min_price and st.ma7:
             st.flip_roi = flip_roi(st.min_price, st.ma7, cut)
+    ready = {k: hours >= h for k, h in MIN_HOURS.items()}
     spikes = sorted((st for st in pool if (st.pct_vs7 or 0) > 0.15 and not st.reset_flag), key=lambda st: st.pct_vs7, reverse=True)[:n]
     heating = sorted((st for st in pool if (st.velocity or 0) >= 1.5 and abs(st.pct_vs7 or 0) < 0.10 and not st.reset_flag),
                      key=lambda st: st.velocity, reverse=True)[:n]
-    flips = sorted((st for st in pool if (st.flip_roi or 0) > 0.10 and not st.reset_flag),
+    flips = sorted((st for st in pool if (st.flip_roi or 0) > 0.10 and not st.reset_flag and st.listings >= 5),
                    key=lambda st: st.flip_roi, reverse=True)[:n]
-    resets = [st for st in stats.values() if st.reset_flag][:n]
-    return {k: [x.to_dict() for x in v] for k, v in
-            {"spikes": spikes, "heating": heating, "flips": flips, "resets": resets}.items()}
+    resets = [st for st in stats.values() if st.reset_flag and st.name and (st.prev_qty or 0) >= 10][:n]
+    lists = {"spikes": spikes, "heating": heating, "flips": flips, "resets": resets}
+    out = {k: ([x.to_dict() for x in v] if ready[k] else []) for k, v in lists.items()}
+    out["history_hours"] = round(hours)
+    out["needs_hours"] = MIN_HOURS
+    return out
 
 
 # ---------------- craft pathways ----------------

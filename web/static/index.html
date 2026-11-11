@@ -71,11 +71,6 @@ button.primary{background:linear-gradient(#a3000a,#6a0006);border-color:#d6a73c;
 .coinrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.coinrow label{width:84px;font-size:12px;color:var(--mute)}
 .coin{display:flex;align-items:center;gap:4px}.coin input{width:70px;text-align:right}.coin i{width:12px;height:12px;border-radius:50%;display:inline-block}
 .coin i.g{background:#e8b100}.coin i.s{background:#c4c8cc}.coin i.c{background:#b8693a}
-.conv{border-top:1px solid var(--line);padding:10px 4px;cursor:pointer}.conv:first-of-type{border-top:0}.conv:hover{background:rgba(255,209,0,.03)}
-.convhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.arrow{color:var(--mute);font-size:13px}
-.convstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;margin-top:6px;font-size:13px}
-.convstats span.k{color:var(--mute)}
 .picker{position:relative}.picker input{width:100%}
 .charcard{display:flex;gap:14px;align-items:center;margin-bottom:12px}
 .charimg{width:84px;height:84px;border-radius:6px;border:1px solid var(--edge);object-fit:cover;background:linear-gradient(#2a2418,#14100a);display:flex;align-items:center;justify-content:center;font:700 28px Cinzel,serif;color:var(--gold);flex:none}
@@ -99,11 +94,6 @@ button.primary{background:linear-gradient(#a3000a,#6a0006);border-color:#d6a73c;
   </div>
   <div id="resets"></div>
 
-  <section class="panel">
-    <h2>Essence exchange <span class="badge b-gold">split 1 → 3 · combine 3 → 1</span></h2>
-    <p class="sub" style="margin:-4px 0 8px">Buy at the cheapest listing, convert by right-clicking, sell at market price. Profit is after the AH cut. Click a row for its history and the best times to do it.</p>
-    <div id="convs"></div>
-  </section>
 
   <div class="grid2">
     <section class="panel" id="explorer">
@@ -146,6 +136,7 @@ button.primary{background:linear-gradient(#a3000a,#6a0006);border-color:#d6a73c;
           <span class="coin"><input id="sC" type="number" min="0" max="99" step="1" value="0" aria-label="Sell copper"><i class="c"></i></span></div>
         <div class="coinrow"><label>Quantity<br><span class="sub">you buy</span></label><input id="cQty" type="number" min="1" step="1" value="20" style="width:100px">
           <label style="width:auto;margin-left:10px">Units out<br><span class="sub">per one bought</span></label><input id="cYield" type="number" min="1" step="1" value="1" style="width:70px" title="3 for a Greater → 3 Lesser essence split"></div>
+        <div id="calcNote" class="sub"></div>
         <div id="calcErr" class="err"></div>
       </div>
       <div class="tiles" id="calcOut"></div>
@@ -259,11 +250,15 @@ async function load() {
   state.itemMap = Object.fromEntries(ov.items.map(i => [i.item_id, i]));
   $('cut').textContent = (ov.ah_cut * 100).toFixed(0) + '%';
   $('updated').textContent = ov.last_update ? (SITE ? 'Prices as of ' : 'Data hour: ') + new Date(ov.last_update * 1000).toLocaleString([], {weekday: 'short', hour: 'numeric', minute: '2-digit'}) : '';
-  list('spikes', ov.tops.spikes, x => `<span class="num up">${pct(x.pct_vs7)}</span>`, x => `vs 7-day avg · now ${gold(x.price)}`, 'No spikes this hour.');
-  list('heating', ov.tops.heating, x => `<span class="num gold">${(x.velocity ?? 0).toFixed(1)}×</span>`, x => `selling vs normal · ${gold(x.price)} (${pct(x.pct_vs7)})`, 'Nothing heating up right now.');
-  list('flips', ov.tops.flips, x => `<span class="num up">${pct(x.flip_roi)}</span>`, x => `buy ${gold(x.min_price)} → sell ~${gold(x.ma7)}`, 'No flips above 10% ROI right now.');
-  $('resets').innerHTML = ov.tops.resets.length ? `<div class="banner">Possible market reset: ${ov.tops.resets.map(x => `<b>${esc(x.name)}</b>`).join(', ')}. Supply crashed and the price jumped in the same hour. Buying into it is risky.</div>` : '';
-  renderCrafts(); renderWatch(); calc(); loadConversions();
+  const need = k => {
+    const h = ov.tops.history_hours, n = (ov.tops.needs_hours || {})[k];
+    return n && h < n ? `Collecting history: ${h} of ${n} hours so far. This list starts once there's enough to compare against.` : null;
+  };
+  list('spikes', ov.tops.spikes, x => `<span class="num up">${pct(x.pct_vs7)}</span>`, x => `vs 7-day avg · now ${gold(x.price)}`, need('spikes') || 'No spikes this hour.');
+  list('heating', ov.tops.heating, x => `<span class="num gold">${(x.velocity ?? 0).toFixed(1)}×</span>`, x => `selling vs normal · ${gold(x.price)} (${pct(x.pct_vs7)})`, need('heating') || 'Nothing heating up right now.');
+  list('flips', ov.tops.flips, x => `<span class="num up">${pct(x.flip_roi)}</span>`, x => `buy ${gold(x.min_price)} → sell ~${gold(x.ma7)}`, need('flips') || 'No flips above 10% ROI right now.');
+  $('resets').innerHTML = (ov.tops.resets || []).length ? `<div class="banner">Possible market reset: ${ov.tops.resets.map(x => `<b>${esc(x.name)}</b>`).join(', ')}. Supply crashed and the price jumped in the same hour. Buying into it is risky.</div>` : '';
+  renderCrafts(); renderWatch(); calc();
   if (state.item) showItem(state.item);
 }
 
@@ -465,80 +460,25 @@ function picker(inputId, resId, onPick) {
     const hits = state.ov.items.filter(i => i.name.toLowerCase().includes(t)).slice(0, 10);
     res.innerHTML = hits.map(i => `<div data-pick="${i.item_id}">${icon(i)}<span style="flex:1">${itemName(i)}</span><span class="sub">${gold(i.min_price)}</span></div>`).join('') || '<div class="sub">No match</div>';
     res.hidden = false;
-    res.querySelectorAll('[data-pick]').forEach(d => d.onclick = () => { const it = info(+d.dataset.pick); q.value = it.name; res.hidden = true; onPick(it); calc(); });
+    res.querySelectorAll('[data-pick]').forEach(d => d.onclick = () => choose(+d.dataset.pick));
   };
+  const choose = id => { const it = info(id); q.value = it.name; res.hidden = true; onPick(it); calc(); };
+  q.onkeydown = e => { if (e.key === 'Enter') { const first = res.querySelector('[data-pick]'); if (first) { e.preventDefault(); choose(+first.dataset.pick); } } };
   document.addEventListener('click', e => { if (!e.target.closest('#' + resId) && e.target !== q) res.hidden = true; });
 }
-picker('pickBuy', 'pickBuyRes', it => { setCoins('b', it.min_price ?? it.price); if (!$('pickSell').value) { $('pickSell').value = it.name; setCoins('s', it.price); } });
-picker('pickSell', 'pickSellRes', it => setCoins('s', it.price));
-function useInCalc(c, mode) {
-  const from = mode === 'split' ? c.big : c.small, to = mode === 'split' ? c.small : c.big;
-  $('pickBuy').value = from.name; $('pickSell').value = to.name;
-  setCoins('b', mode === 'split' ? from.cheapest : from.cheapest * c.ratio);
-  setCoins('s', to.price);
-  $('cYield').value = mode === 'split' ? c.ratio : 1;
-  if (mode !== 'split') $('pickBuy').value = `${c.ratio}× ${from.name}`;
-  calc(); $('calcOut').scrollIntoView({behavior: 'smooth', block: 'center'});
+function flash(p) {
+  ['G', 'S', 'C'].forEach(k => { const el = $(p + k); el.style.borderColor = 'var(--gold)'; el.style.boxShadow = '0 0 0 2px rgba(255,209,0,.35)';
+    setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 1200); });
 }
-
-async function loadConversions() {
-  state.convs = await api('/api/conversions?house=' + encodeURIComponent(state.house)) || [];
-  const box = $('convs');
-  if (!state.convs.length) { box.innerHTML = '<p class="empty">No essence prices yet for this house. They appear after the collector has seen them listed.</p>'; return; }
-  const vb = v => `<span class="badge ${v === 'Wait' ? '' : 'b-up'}">${esc(v)}</span>`;
-  box.innerHTML = state.convs.map((c, i) => {
-    const better = c.avg_split_7d != null ? c.split_profit - c.avg_split_7d : null;
-    return `<div class="conv" data-ci="${i}">
-      <div class="convhead">${icon(c.big)}<span class="${qcls(c.big.quality)}" style="font-weight:600">${esc(c.big.name)}</span>
-        <span class="arrow">⇄ ${c.ratio}×</span>${icon(c.small)}<span class="${qcls(c.small.quality)}" style="font-weight:600">${esc(c.small.name)}</span>
-        <span style="flex:1"></span>${vb(c.verdict)}</div>
-      <div class="convstats">
-        <div><span class="k">Split profit each</span><br><b class="${cls(c.split_profit)}">${gold(c.split_profit)}</b> <span class="sub">${pct(c.split_roi)}</span></div>
-        <div><span class="k">vs its 7-day average</span><br><b class="${cls(better)}">${better == null ? '—' : gold(better)}</b></div>
-        <div><span class="k">Combine profit each</span><br><b class="${cls(c.combine_profit)}">${gold(c.combine_profit)}</b></div>
-        <div><span class="k">Greater: cheapest / market</span><br>${gold(c.big.cheapest)} / ${gold(c.big.price)}</div>
-        <div><span class="k">Lesser: cheapest / market</span><br>${gold(c.small.cheapest)} / ${gold(c.small.price)}</div>
-        <div><span class="k">Market buys per day</span><br>${c.big.daily_sold} greater · ${c.small.daily_sold} lesser</div>
-      </div>
-      <div class="convdetail" hidden></div></div>`;
-  }).join('');
-  box.querySelectorAll('.conv').forEach(el => el.onclick = e => { if (!e.target.closest('button,.convdetail')) toggleConv(+el.dataset.ci, el); });
+function filledNote(it, which, price) {
+  const when = state.ov && state.ov.last_update ? new Date(state.ov.last_update * 1000).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'}) : '';
+  $('calcNote').innerHTML = `${which}: ${itemName(it)} at ${gold(price)}${when ? ' (latest data, ' + when + ')' : ''}`;
 }
-
-function bestTimes(series, key) {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const byHour = {}, byDay = {};
-  for (const p of series) { const d = new Date(p.ts * 1000);
-    (byHour[d.getHours()] ??= []).push(p[key]); (byDay[d.getDay()] ??= []).push(p[key]); }
-  const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
-  const fmtH = h => new Date(2000, 0, 1, h).toLocaleTimeString([], {hour: 'numeric'});
-  const hours = Object.entries(byHour).map(([h, v]) => [+h, avg(v)]).sort((a, b) => b[1] - a[1]);
-  const dayRank = Object.entries(byDay).map(([d, v]) => [days[d], avg(v)]).sort((a, b) => b[1] - a[1]);
-  return {hours: hours.slice(0, 3).map(([h, v]) => `${fmtH(h)} (${goldText(v)})`), worst: hours.slice(-2).map(([h]) => fmtH(h)),
-          days: dayRank.slice(0, 2).map(([d, v]) => `${d} (${goldText(v)})`)};
-}
-
-function toggleConv(i, el) {
-  const det = el.querySelector('.convdetail'), c = state.convs[i];
-  if (!det.hidden) { det.hidden = true; return; }
-  const mode = c.combine_profit > c.split_profit ? 'combine' : 'split';
-  const bt = bestTimes(c.series, mode);
-  det.innerHTML = `<div class="chartbox sm" style="margin-top:10px"><canvas id="convChart${i}"></canvas></div>
-    <p class="sub" style="margin:8px 0 4px">Based on ${Math.round(c.series.length / 24)} days of history, ${mode === 'split' ? 'splitting' : 'combining'} has paid best around <b class="gold">${bt.hours.join(', ')}</b> and on <b class="gold">${bt.days.join(', ')}</b> (your local time). It's usually worst around ${bt.worst.join(' and ')}.</p>
-    <div style="display:flex;gap:8px;margin-top:6px"><button data-m="split">Use split in calculator</button><button data-m="combine">Use combine in calculator</button></div>`;
-  det.hidden = false;
-  det.querySelectorAll('button').forEach(b => b.onclick = ev => { ev.stopPropagation(); useInCalc(c, b.dataset.m); });
-  const labels = c.series.map(p => new Date(p.ts * 1000));
-  new Chart($('convChart' + i), {type: 'line', data: {labels, datasets: [
-      {label: 'Split profit each', data: c.series.map(p => p.split), borderColor: '#ffd100', borderWidth: 1.5, pointRadius: 0, tension: .2},
-      {label: 'Combine profit each', data: c.series.map(p => p.combine), borderColor: '#4aa3ff', borderWidth: 1, pointRadius: 0, tension: .2},
-      {label: 'Break-even', data: c.series.map(() => 0), borderColor: '#f05d4f', borderWidth: 1, borderDash: [4, 4], pointRadius: 0}]},
-    options: {responsive: true, maintainAspectRatio: false, animation: false, interaction: {mode: 'index', intersect: false},
-      plugins: {legend: {labels: {color: '#a0937a', boxWidth: 10}}, tooltip: {callbacks: {title: t => labels[t[0].dataIndex].toLocaleString(), label: t => `${t.dataset.label}: ${goldText(t.raw)}`}}},
-      scales: {x: {ticks: {color: '#a0937a', maxTicksLimit: 8, callback: (v, k) => labels[k].toLocaleDateString([], {month: 'short', day: 'numeric'})}, grid: {color: '#2a2216'}},
-               y: {ticks: {color: '#a0937a', callback: v => goldText(v)}, grid: {color: '#2a2216'}}}}});
-}
-
+picker('pickBuy', 'pickBuyRes', it => {
+  const buy = it.min_price ?? it.price; setCoins('b', buy); flash('b'); filledNote(it, 'Buy price filled with the cheapest listing', buy);
+  if (!$('pickSell').value) { $('pickSell').value = it.name; setCoins('s', it.price); flash('s'); }
+});
+picker('pickSell', 'pickSellRes', it => { setCoins('s', it.price); flash('s'); filledNote(it, 'Sell price filled with the market price', it.price); });
 function calc() {
   const cut = state.ov ? state.ov.ah_cut : 0.05;
   const buy = readCoins('b'), sell = readCoins('s'), qty = Math.floor(+$('cQty').value), yld = Math.floor(+$('cYield').value);
