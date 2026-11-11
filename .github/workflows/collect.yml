@@ -26,7 +26,7 @@ jobs:
       BLIZZARD_CLIENT_SECRET: ${{ secrets.BLIZZARD_CLIENT_SECRET }}
       REGION: us
       RULESET_NAME: ${{ vars.RULESET_NAME || 'Normal' }}
-      HOUSE_IDS: ${{ vars.HOUSE_IDS || '110,111,119,123' }}
+      HOUSE_IDS: ${{ vars.HOUSE_IDS || '111' }}
       DEFAULT_HOUSE: ${{ vars.DEFAULT_HOUSE || 'Alliance' }}
       STATIC_NAMESPACE: ${{ vars.STATIC_NAMESPACE || 'static-1.60.1_70399-forever-us' }}
       AH_CUT_BLACKWATER: ${{ vars.AH_CUT_BLACKWATER || '0.15' }}

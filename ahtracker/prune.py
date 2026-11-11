@@ -15,8 +15,17 @@ def main() -> None:
     ap.add_argument("--days", type=int, default=60)
     ap.add_argument("--vacuum", action="store_true")
     a = ap.parse_args()
-    path = load_settings().db_path
-    con = sqlite3.connect(str(path))
+    settings = load_settings()
+    con = sqlite3.connect(str(settings.db_path))
+    if settings.house_ids:  # drop houses you no longer collect
+        keep = ",".join(str(i) for i in settings.house_ids)
+        old = [r[0] for r in con.execute(f"SELECT house_key FROM houses WHERE house_id NOT IN ({keep})")]
+        for key in old:
+            for table in ("item_hour", "last_listings", "snapshots", "houses"):
+                con.execute(f"DELETE FROM {table} WHERE house_key=?", (key,))
+        if old:
+            con.commit()
+            print("Removed houses no longer collected:", ", ".join(old))
     last = con.execute("SELECT MAX(ts) FROM item_hour").fetchone()[0]
     if last:
         n = con.execute("DELETE FROM item_hour WHERE ts < ?", (last - a.days * 86400,)).rowcount
